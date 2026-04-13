@@ -29,8 +29,8 @@ class Player(pygame.sprite.Sprite):
         self.aniCycles = 2
 
 
-        self.jumpHeight = 60
-        self.gravStrength = 7
+        self.jumpForce = 3
+        self.gravStrength = 1
         self.moveSpeed = 5
         self.accSpeed = 20
         
@@ -46,20 +46,21 @@ class Player(pygame.sprite.Sprite):
             print(self.images)
 
     def gravity(self):
-        if self.rect.y <= worldy - ty - ty:
-            self.vertSpeed += self.gravStrength
+        if self.rect.y <= worldy - ty - ty:        #If in the air
+            self.accRem -= self.gravStrength         #Acceleration decreases by grav strength
             self.rect.y = worldy - ty - ty
-        else:
-            self.vertSpeed = 0
+        else:                                      #else
+            self.vertSpeed = 0                       #Stop falling
             
     def update(self):
         pressed_keys = pygame.key.get_pressed()
         
         if pressed_keys[K_SPACE]:
-            if not self.rect.y <= worldy -ty -ty:
-                  self.accRem += self.jumpHeight
+            if not self.rect.y <= worldy -ty -ty:         #If not in the air(on the ground) and space pressed:
+                  self.accRem += self.jumpForce               #Accelleration increases by jump force
 
-                  #found issue- not resetting acelleration
+
+
                   
         if self.rect.left > 0:
               if pressed_keys[K_LEFT]:
@@ -79,12 +80,13 @@ class Player(pygame.sprite.Sprite):
             self.curFrame += 1
             self.aniCounter = 0
 
-        if self.accRem > 0:
-            self.vertSpeed -= 10
-            self.accRem -= 1
+            self.vertSpeed += self.accRem
+
+
         
         self.aniCounter += 1
-        self.rect.move_ip(0, self.vertSpeed)
+        if self.rect.y >= worldy -ty -ty:                           #if player height greater/equal to (lowest screen height - sprite height)
+            self.rect.move_ip(0, -self.vertSpeed)                       #move up according to their speed                           
     def death(self):
         self.alive = False
 
@@ -173,23 +175,23 @@ class Level:
                 
     def spike(level, tx, ty):
         spike_list = pygame.sprite.Group()
-        sploc = []                                       #sploc is a list which determines the location of the spikes e.g. [0, 642,screenY,256]
+        sploc = []                                       #sploc is a list which determines the location of the spikes e.g. [0, 642,screenY,256]. it may be more efficient to add locs here
         i = 0
         if level == 1:
-            #Place spike locations for stage 1 here
-            sploc.append((worldy, worldx // 2))
-            while i < len(sploc):
+             #Place spike locations for stage 1 here
+             sploc.append((worldy, worldx // 2))
+             sploc.append((worldy // 2, worldx // 2))
+             sploc.append((0, 0))
+             while i < len(sploc):                                    
                 j = 0
-                while j <= sploc[i][1]:
+                while j <= sploc[i][2]:
                     spike = Spike((sploc[i][0] + (j * tx)), sploc[i][1], tx, ty, pygame.image.load("pyGame_Image_Folder/Animation/Platformer/Obstacles/Spike/Spike1.png"))
                     spike_list.add(spike)
                     j = j + 1
                 i = i + 1
         if level == 2:
             print("not yet complete")
-        return spike_list
-        
-                
+        return spike_list                  
                 
     #add enemy spawn loc here
 
@@ -214,7 +216,7 @@ class Level:
         return plat_list
     
 class Updraft(pygame.sprite.Sprite):
-        print("d")
+        print("asdf")
             
 
     
@@ -227,7 +229,7 @@ while i <= (worldx / tx) + tx:
     
 ground_list = Level.ground(1, gloc, tx, ty)
 plat_list = Level.platform(1, tx, ty)
-spike_list = Level.spike(1,tx,ty)
+#spike_list = Level.spike(1, tx, ty)
 
         
 player = Player() #spawn the player char
@@ -256,7 +258,7 @@ while running == True:
     batvert.draw(screen)
  #   ground_list.draw(screen)
     plat_list.draw(screen)
-    spike_list.draw(screen)
+ #   spike_list.draw(screen)
 #    if pygame.Rect.colliderect(spike1.rect,player.rect):
  #       player.death()
         
