@@ -29,7 +29,7 @@ class Player(pygame.sprite.Sprite):
         self.aniCycles = 2
 
 
-        self.jumpForce = 3
+        self.jumpForce = 1
         self.gravStrength = 1
         self.moveSpeed = 5
         self.accSpeed = 20
@@ -46,20 +46,23 @@ class Player(pygame.sprite.Sprite):
             print(self.images)
 
     def gravity(self):
-        if self.rect.y <= worldy - ty - ty:        #If in the air
+        if self.rect.y <= worldy - ty - ty:        #If character position above world bottom(in the air):
             self.accRem -= self.gravStrength         #Acceleration decreases by grav strength
-            self.rect.y = worldy - ty - ty
-        else:                                      #else
-            self.vertSpeed = 0                       #Stop falling
+                                                    #FOUND ISSUE: NOT REGISTERING AS 'ON GROUND'
+        else:                                        #else
+            if accRem < 0:                               #if accelleration is negative:
+                self.vertSpeed = 0                           #Stop falling
+                self.accRem = 0
+                
+                      
             
     def update(self):
         pressed_keys = pygame.key.get_pressed()
         
         if pressed_keys[K_SPACE]:
-            if not self.rect.y <= worldy -ty -ty:         #If not in the air(on the ground) and space pressed:
-                  self.accRem += self.jumpForce               #Accelleration increases by jump force
-
-
+            if self.rect.y >= worldy -ty -ty - ty:       #If not in the air(on the ground) and space pressed:
+                self.accRem += self.jumpForce               #Accelleration increases by jump force
+                print(self.accRem)                      
 
                   
         if self.rect.left > 0:
@@ -80,13 +83,13 @@ class Player(pygame.sprite.Sprite):
             self.curFrame += 1
             self.aniCounter = 0
 
-            self.vertSpeed += self.accRem
+        self.vertSpeed += self.accRem
 
 
         
         self.aniCounter += 1
-        if self.rect.y >= worldy -ty -ty:                           #if player height greater/equal to (lowest screen height - sprite height)
-            self.rect.move_ip(0, -self.vertSpeed)                       #move up according to their speed                           
+        if self.rect.y > worldy -ty -ty or self.accRem > 0:                           #if player height greater/equal to (lowest screen height - sprite height)
+            self.rect.move_ip(0, -self.vertSpeed)                           #move vertically according to their speed                           
     def death(self):
         self.alive = False
 
@@ -231,9 +234,10 @@ ground_list = Level.ground(1, gloc, tx, ty)
 plat_list = Level.platform(1, tx, ty)
 #spike_list = Level.spike(1, tx, ty)
 
-        
+
 player = Player() #spawn the player char
 batvert = BatVert()   #spawn the enemy bat
+player.rect.y = worldy - ty - ty        #Places player on ground
 
 
 
