@@ -28,10 +28,11 @@ class Player(pygame.sprite.Sprite):
         self.aniCycles = 2
 
 
-        self.jumpForce = 4   #make negative to be a beaver
-        self.gravStrength = 1 
-        self.moveSpeed = 5
+        self.jumpForce = 2   #make negative to be a beaver
+        self.gravStrength = 0.5 
+        self.moveSpeed = 7
         self.accSpeed = 20
+
         
         
         self.isFlipped = False
@@ -47,6 +48,10 @@ class Player(pygame.sprite.Sprite):
     def gravity(self):
         if self.rect.y <= worldy-ty-ty:        #If character position above world bottom(in the air):
             self.accRem -= self.gravStrength         #Acceleration decreases by grav strength
+            if self.isFlipped == True:
+                self.rect.move_ip(-4, 0)
+            else:
+                self.rect.move_ip(4,0)
                                         #FOUND ISSUE: NOT REGISTERING AS 'ON GROUND'
         else:                                        #else
             if self.accRem < 0:                               #if accelleration is negative:
@@ -141,7 +146,7 @@ class BatVert(pygame.sprite.Sprite):
 class Platform(pygame.sprite.Sprite):
     def __init__(self, xloc,yloc, imgw,imgh, img):
         super().__init__()
-        self.image = pygame.image.load("pyGame_Image_Folder/Terrain/Platformer/FloatingIsland/Floating_Island_1.png").convert()
+        self.image = pygame.image.load("pyGame_Image_Folder/Terrain/Platformer/FloatingIsland/Floating_Island_1.png").convert_alpha()
         self.rect = self.image.get_rect()
         self.rect.y = yloc
         self.rect.x = xloc
@@ -152,9 +157,9 @@ class Platform(pygame.sprite.Sprite):
         screen.blit(self.image, self.rect)
         
 class Spike(pygame.sprite.Sprite):
-    def __init__(self, xloc,yloc, imgw,imgh, img):
+    def __init__(self, xloc,yloc, imgw, imgh, img):
         super().__init__()
-        self.image = pygame.image.load("pyGame_Image_Folder/Animation/Platformer/Obstacles/Spike/Spike1.png").convert()
+        self.image = pygame.image.load("pyGame_Image_Folder/Animation/Platformer/Obstacles/Spike/Spike1.png").convert_alpha()
         self.rect = self.image.get_rect()
         self.rect.y = yloc
         self.rect.x = xloc
@@ -181,9 +186,8 @@ class Level:
         i = 0
         if level == 1:
              #Place spike locations for stage 1 here 
-             sploc.append((worldy, worldx // 2))                                  
-             sploc.append((worldy // 2, worldx // 2))
-             sploc.append((0, 0))
+             sploc.append((worldx // 2, worldy // 2 -36, 0))           #The last number is how many spikes in a row there are                        
+             sploc.append((worldx // 2, worldy -ty, 0))
              while i < len(sploc):                                    
                 j = 0
                 while j <= sploc[i][2]:                        #for some reason sploc is classed as a tuple
@@ -203,13 +207,12 @@ class Level:
         i = 0
         if level == 1:                                                               
             #Place platform locations for stage 1 here 
-            ploc.append((worldx-(4*ty), worldy -256, 3))
-            ploc.append((worldx-768, worldy - ty - 392, 3))
-            ploc.append((worldx-1024, worldy - ty - 392, 3))
+            ploc.append((worldx-(4*ty), worldy -256, 3))                    #The last number is how long the platform is  
+            ploc.append((worldx//2 - 128, worldy - ty - 392, 10))
             while i < len(ploc):
                 j = 0
                 while j <= ploc[i][2]:
-                    plat = Platform((ploc[i][0] + (j * tx)), ploc[i][1], tx, ty, pygame.image.load("pyGame_Image_Folder/Terrain/Platformer/FloatingIsland/Floating_Island_1.png"))
+                    plat = Platform((ploc[i][0] + (j * tx)), ploc[i][1], tx, ty, pygame.image.load("pyGame_Image_Folder/Terrain/Platformer/FloatingIsland/Floating_Island_1.png").convert_alpha())
                     plat_list.add(plat)
                     j = j + 1
                 i = i + 1
