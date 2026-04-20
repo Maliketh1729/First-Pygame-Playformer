@@ -15,6 +15,7 @@ level = 1
 running = True
 
 
+
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -29,7 +30,9 @@ class Player(pygame.sprite.Sprite):
 
 
         self.jumpForce = 2   #make negative to be a beaver
-        self.gravStrength = 0.5 
+        self.gravStrength = 0.5
+
+        self.walking = False
         self.moveSpeed = 7
         self.accSpeed = 20
 
@@ -48,15 +51,19 @@ class Player(pygame.sprite.Sprite):
     def gravity(self):
         if self.rect.y <= worldy-ty-ty:        #If character position above world bottom(in the air):
             self.accRem -= self.gravStrength         #Acceleration decreases by grav strength
-            if self.isFlipped == True:
-                self.rect.move_ip(-4, 0)
-            else:
-                self.rect.move_ip(4,0)
-                                        #FOUND ISSUE: NOT REGISTERING AS 'ON GROUND'
+            if self.walking == True:
+                if self.isFlipped == True:
+                    self.rect.move_ip(-4, 0)
+                else:
+                    self.rect.move_ip(4,0)
+
+                   
+
         else:                                        #else
             if self.accRem < 0:                               #if accelleration is negative:
                 self.vertSpeed = 0                                #Stop falling
                 self.accRem = 0                                   #and kill all momentum
+        self.walking = False
 
                       
             
@@ -73,10 +80,12 @@ class Player(pygame.sprite.Sprite):
               if pressed_keys[K_LEFT]:
                   self.rect.move_ip(-self.moveSpeed, 0)
                   self.isFlipped = True
+                  self.walking = True
         if self.rect.right < worldx:        
               if pressed_keys[K_RIGHT]:
                   self.rect.move_ip(self.moveSpeed, 0)
                   self.isFlipped = False
+                  self.walking = True
         if pressed_keys[K_ESCAPE]:
             running = False
 
@@ -95,15 +104,14 @@ class Player(pygame.sprite.Sprite):
       #  if self.rect.y > worldy -ty -ty:# or self.accRem > 0:                           #if player height greater/equal to (lowest screen height - sprite height)
         self.rect.move_ip(0, -self.vertSpeed)                           #move vertically according to their speed                           
     def death(self):
-        self.alive = False
-
+        self.accRem += 1                                                    #I must go now
+        self.gravStrength = -0.5                                            #My people need me
     
     def draw(self, surface):
-        if self.alive == True:
-            if self.isFlipped == True:
-                screen.blit(pygame.transform.flip(self.image, True, False), self.rect)
-            else:
-                screen.blit(self.image, self.rect)
+        if self.isFlipped == True:
+            screen.blit(pygame.transform.flip(self.image, True, False), self.rect)
+        else:
+            screen.blit(self.image, self.rect)
 
 
 class BatVert(pygame.sprite.Sprite):
@@ -187,7 +195,7 @@ class Level:
         if level == 1:
              #Place spike locations for stage 1 here 
              sploc.append((worldx // 2, worldy // 2 -36, 0))           #The last number is how many spikes in a row there are                        
-             sploc.append((worldx // 2, worldy -ty, 0))
+             sploc.append((worldx // 2, worldy -ty, 1))
              while i < len(sploc):                                    
                 j = 0
                 while j <= sploc[i][2]:                        #for some reason sploc is classed as a tuple
@@ -265,9 +273,11 @@ while running == True:
  #   ground_list.draw(screen)
     plat_list.draw(screen)
     spike_list.draw(screen)
-#    if pygame.Rect.colliderect(spike1.rect,player.rect):
- #       player.death()
-        
+
+    isHit = pygame.sprite.spritecollide(player, spike_list, False)
+    for hit in isHit:
+        player.death()
+
 
     pygame.display.update()
     screen.fill("blue")
