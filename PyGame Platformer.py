@@ -45,7 +45,8 @@ class Player(pygame.sprite.Sprite):
             img.convert_alpha()
             self.images.append(img)
             self.image = self.images[self.curFrame]
-            self.rect = self.image.get_rect()
+            self.bigrect = self.image.get_rect()
+            self.rect = self.bigrect.inflate(-32,-16)
             print(self.images)
 
     def gravity(self):
@@ -112,6 +113,7 @@ class Player(pygame.sprite.Sprite):
             screen.blit(pygame.transform.flip(self.image, True, False), self.rect)
         else:
             screen.blit(self.image, self.rect)
+            # pygame.draw.rect(screen, (255,0,0),self.rect,2) #display hitbox
 
 
 class BatVert(pygame.sprite.Sprite):
@@ -168,7 +170,8 @@ class Spike(pygame.sprite.Sprite):
     def __init__(self, xloc,yloc, imgw, imgh, img):
         super().__init__()
         self.image = pygame.image.load("pyGame_Image_Folder/Animation/Platformer/Obstacles/Spike/Spike1.png").convert_alpha()
-        self.rect = self.image.get_rect()
+        self.bigrect = self.image.get_rect()
+        self.rect = self.bigrect.inflate(-48,-48)
         self.rect.y = yloc
         self.rect.x = xloc
         imgw = 128
@@ -176,6 +179,7 @@ class Spike(pygame.sprite.Sprite):
         
     def draw(self, screen):
         screen.blit(self.image, self.rect)
+       # pygame.draw.rect(screen, (255,0,0),self.rect,2) #display hitbox
 
 class Level:                                             
     def ground(level,gloc,tx,ty):
@@ -194,8 +198,8 @@ class Level:
         i = 0
         if level == 1:
              #Place spike locations for stage 1 here 
-             sploc.append((worldx // 2, worldy // 2 -36, 0))           #The last number is how many spikes in a row there are                        
-             sploc.append((worldx // 2, worldy -ty, 1))
+             sploc.append((worldx // 2, worldy // 2 -36, 1))           #The last number is how many spikes in a row there are                        
+             sploc.append((worldx // 2, worldy -ty, 0))
              while i < len(sploc):                                    
                 j = 0
                 while j <= sploc[i][2]:                        #for some reason sploc is classed as a tuple
@@ -275,6 +279,7 @@ while running == True:
     spike_list.draw(screen)
 
     isHit = pygame.sprite.spritecollide(player, spike_list, False)
+    
     for hit in isHit:
         player.death()
 
