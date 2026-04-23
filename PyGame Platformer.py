@@ -102,7 +102,6 @@ class Player(pygame.sprite.Sprite):
 
         
         self.aniCounter += 1
-      #  if self.rect.y > worldy -ty -ty:# or self.accRem > 0:                           #if player height greater/equal to (lowest screen height - sprite height)
         self.rect.move_ip(0, -self.vertSpeed)                           #move vertically according to their speed                           
     def death(self):
         self.accRem += 1                                                    #I must go now
@@ -231,9 +230,37 @@ class Level:
         if level == 2:
             print("not yet complete")
         return plat_list
+    def spring(level, tx, ty):
+        spring_list = pygame.sprite.Group()
+        spriloc = []                                    
+        i = 0
+        if level == 1:                                                               
+            #Place platform locations for stage 1 here 
+            spriloc.append((worldx-(6*ty), worldy -ty, 0))
+            while i < len(spriloc):
+                j = 0
+                while j <= spriloc[i][2]:
+                    spring = Spring((spriloc[i][0] + (j * tx)), spriloc[i][1], tx, ty, pygame.image.load("pyGame_Image_Folder/Animation/Platformer/Obstacles/Spring/spring1.png").convert_alpha())
+                    spring_list.add(spring)
+                    j = j + 1
+                i = i + 1
+        if level == 2:
+            print("not yet complete")
+        return spring_list
     
-class Updraft(pygame.sprite.Sprite):
-        print("asdf")
+class Spring(pygame.sprite.Sprite):
+    def __init__(self, xloc,yloc, imgw, imgh, img):
+        super().__init__()
+        self.image = pygame.image.load("pyGame_Image_Folder/Animation/Platformer/Obstacles/Spring/spring1.png").convert_alpha()
+        self.rect = self.image.get_rect()
+        self.rect.y = yloc
+        self.rect.x = xloc
+        imgw = 128
+        imgh = 128
+        
+    def draw(self, screen):
+        screen.blit(self.image, self.rect)
+       # pygame.draw.rect(screen, (255,0,0),self.rect,2) #display hitbox
             
 
     
@@ -247,6 +274,7 @@ while i <= (worldx / tx) + tx:
 ground_list = Level.ground(1, gloc, tx, ty)
 plat_list = Level.platform(1, tx, ty)
 spike_list = Level.spike(1, tx, ty)
+spring_list = Level.spring(1, tx, ty)
 
 
 player = Player() #spawn the player char
@@ -277,12 +305,17 @@ while running == True:
  #   ground_list.draw(screen)
     plat_list.draw(screen)
     spike_list.draw(screen)
+    spring_list.draw(screen)
 
     isHit = pygame.sprite.spritecollide(player, spike_list, False)
     
     for hit in isHit:
         player.death()
 
+    isSpring = pygame.sprite.spritecollide(player, spring_list, False)
+    for spring in isSpring:
+        player.accRem = 4
+
 
     pygame.display.update()
-    screen.fill("blue")
+    screen.fill("red")
