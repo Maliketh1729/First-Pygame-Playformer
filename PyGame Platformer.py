@@ -28,8 +28,10 @@ class Player(pygame.sprite.Sprite):
 
         self.aniCycles = 2
 
+        self.isJumping = False
+        self.isFalling = False
 
-        self.jumpForce = 2   #make negative to be a beaver
+        self.jumpForce = 4   #make negative to be a beaver
         self.gravStrength = 0.5
 
         self.walking = False
@@ -50,9 +52,10 @@ class Player(pygame.sprite.Sprite):
             print(self.images)
 
     def gravity(self):
-        isGrounded = pygame.sprite.spritecollide(player, plat_list, False)     #If character position above world bottom(in the air):
-        if isGrounded == []:                  
+        isGrounded = pygame.sprite.spritecollide(player, plat_list, False)     #If character position colliding with a platform:
+        if isGrounded == []:                                               #If the list of collisions with platform is empty(not grounded)
             self.accRem -= self.gravStrength         #Acceleration decreases by grav strength
+            self.isJumping = True
             if self.walking == True:
                 if self.isFlipped == True:
                     self.rect.move_ip(-4, 0)
@@ -60,11 +63,11 @@ class Player(pygame.sprite.Sprite):
                     self.rect.move_ip(4,0)
 
                    
-
-        else:                                        #else
-            if self.accRem < 0:                               #if accelleration is negative:
-                self.vertSpeed = 0                                #Stop falling
-                self.accRem = 0                                   #and kill all momentum
+        for col in isGrounded:
+            self.vertSpeed = 0
+            self.rect.bottom = col.rect.top
+            self.accRem = 0
+            self.isJumping = False
         self.walking = False
 
                       
@@ -73,7 +76,7 @@ class Player(pygame.sprite.Sprite):
         pressed_keys = pygame.key.get_pressed()
         
         if pressed_keys[K_SPACE]:
-            if self.rect.y >= worldy -ty -ty:       #If not in the air(on the ground) and space pressed:
+            if self.isJumping == False:       #If not in the air(on the ground) and space pressed:
                 self.accRem += self.jumpForce               #Accelleration increases by jump force
                 print(self.accRem)                      
 
@@ -90,23 +93,26 @@ class Player(pygame.sprite.Sprite):
                   self.walking = True
         if pressed_keys[K_ESCAPE]:
             running = False
+    
+        self.vertSpeed += self.accRem
+        self.rect.move_ip(0, -self.vertSpeed)                           #move vertically according to their speed
 
+    
+        
+    def animate(self):
         if self.aniCounter >= 20:                                    #Reduces the speeed of the animation 10x
             if self.curFrame >= self.aniCycles:                        #Resets the frame whenever it loops
                 self.curFrame = 0
             self.image = self.images[self.curFrame]
             self.curFrame += 1
             self.aniCounter = 0
+            
         if self.aniCounter >= 5:                                    #Allows 'coyote time'
             self.isGrounded = []
-
-
-        self.vertSpeed += self.accRem
-
-
-        
         self.aniCounter += 1
-        self.rect.move_ip(0, -self.vertSpeed)                           #move vertically according to their speed                           
+
+
+                     
     def death(self):
         self.accRem += 1                                                    #I must go now
         self.gravStrength = -0.5                                            #My people need me
@@ -133,6 +139,7 @@ class BatVert(pygame.sprite.Sprite):
             self.image = self.images[self.curFrame]
             self.rect = self.image.get_rect()
         self.rect.move_ip(worldx // 2, worldy //2)
+        
     def update(self):
         if self.rect.y >= worldy - (2 * ty):
             self.upSwing = True
@@ -300,9 +307,11 @@ while running == True:
             pygame.quit()
             sys.exit()
 
-    player.gravity()
 
+    player.gravity()
     player.update()
+    player.animate()
+    
     batvert.update()
 
 
@@ -320,7 +329,7 @@ while running == True:
 
     isSpring = pygame.sprite.spritecollide(player, spring_list, False)
     for spring in isSpring:
-        player.accRem = 4
+        player.accRem = (player.jumpForce*2)
 
     isspring,isHit = [],[]
 
