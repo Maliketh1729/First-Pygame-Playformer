@@ -28,8 +28,10 @@ class Player(pygame.sprite.Sprite):
 
         self.aniCycles = 2
 
+        self.isJumping = False
+        self.isFalling = False
 
-        self.jumpForce = 2   #make negative to be a beaver
+        self.jumpForce = 4   #make negative to be a beaver
         self.gravStrength = 0.5
 
         self.walking = False
@@ -50,8 +52,10 @@ class Player(pygame.sprite.Sprite):
             print(self.images)
 
     def gravity(self):
-        if self.rect.y <= worldy-ty-ty:        #If character position above world bottom(in the air):
+        isGrounded = pygame.sprite.spritecollide(player, plat_list, False)     #If character position colliding with a platform:
+        if isGrounded == []:                                               #If the list of collisions with platform is empty(not grounded)
             self.accRem -= self.gravStrength         #Acceleration decreases by grav strength
+            self.isJumping = True
             if self.walking == True:
                 if self.isFlipped == True:
                     self.rect.move_ip(-4, 0)
@@ -59,11 +63,11 @@ class Player(pygame.sprite.Sprite):
                     self.rect.move_ip(4,0)
 
                    
-
-        else:                                        #else
-            if self.accRem < 0:                               #if accelleration is negative:
-                self.vertSpeed = 0                                #Stop falling
-                self.accRem = 0                                   #and kill all momentum
+        for collision in isGrounded:
+            self.vertSpeed = 0
+            self.rect.bottom = collision.rect.top   #Player is teleported to plat top                 CAN BE REMOVED BUT STICKS TO CEILINGS
+            self.accRem = 0
+            self.isJumping = False
         self.walking = False
 
                       
@@ -72,7 +76,7 @@ class Player(pygame.sprite.Sprite):
         pressed_keys = pygame.key.get_pressed()
         
         if pressed_keys[K_SPACE]:
-            if self.rect.y >= worldy -ty -ty:       #If not in the air(on the ground) and space pressed:
+            if self.isJumping == False:       #If not in the air(on the ground) and space pressed:
                 self.accRem += self.jumpForce               #Accelleration increases by jump force
                 print(self.accRem)                      
 
@@ -89,20 +93,26 @@ class Player(pygame.sprite.Sprite):
                   self.walking = True
         if pressed_keys[K_ESCAPE]:
             running = False
+    
+        self.vertSpeed += self.accRem
+        self.rect.move_ip(0, -self.vertSpeed)                           #move vertically according to their speed
 
+    
+        
+    def animate(self):
         if self.aniCounter >= 20:                                    #Reduces the speeed of the animation 10x
             if self.curFrame >= self.aniCycles:                        #Resets the frame whenever it loops
                 self.curFrame = 0
             self.image = self.images[self.curFrame]
             self.curFrame += 1
             self.aniCounter = 0
-
-        self.vertSpeed += self.accRem
-
-
-        
+            
+        if self.aniCounter >= 5:                                    #Allows 'coyote time'
+            self.isGrounded = []
         self.aniCounter += 1
-        self.rect.move_ip(0, -self.vertSpeed)                           #move vertically according to their speed                           
+
+
+                     
     def death(self):
         self.accRem += 1                                                    #I must go now
         self.gravStrength = -0.5                                            #My people need me
@@ -129,6 +139,7 @@ class BatVert(pygame.sprite.Sprite):
             self.image = self.images[self.curFrame]
             self.rect = self.image.get_rect()
         self.rect.move_ip(worldx // 2, worldy //2)
+        
     def update(self):
         if self.rect.y >= worldy - (2 * ty):
             self.upSwing = True
@@ -156,7 +167,8 @@ class Platform(pygame.sprite.Sprite):
     def __init__(self, xloc,yloc, imgw,imgh, img):
         super().__init__()
         self.image = pygame.image.load("pyGame_Image_Folder/Terrain/Platformer/FloatingIsland/Floating_Island_1.png").convert_alpha()
-        self.rect = self.image.get_rect()
+        self.bigRect = self.image.get_rect()
+        self.rect = self.bigRect.inflate(0,-48)
         self.rect.y = yloc
         self.rect.x = xloc
         imgw = 128
@@ -178,7 +190,7 @@ class Spike(pygame.sprite.Sprite):
         
     def draw(self, screen):
         screen.blit(self.image, self.rect)
-       # pygame.draw.rect(screen, (255,0,0),self.rect,2) #display hitbox
+        pygame.draw.rect(screen, (255,0,0),self.rect,2) #display hitbox
 
 class Level:                                             
     def ground(level,gloc,tx,ty):
@@ -197,7 +209,7 @@ class Level:
         i = 0
         if level == 1:
              #Place spike locations for stage 1 here 
-             sploc.append((worldx // 2, worldy // 2 -36, 1))           #The last number is how many spikes in a row there are                        
+             sploc.append((worldx // 2+ty, worldy // 2, 0))           #The last number is how many spikes in a row there are                        
              sploc.append((worldx // 2, worldy -ty, 0))
              while i < len(sploc):                                    
                 j = 0
@@ -220,6 +232,8 @@ class Level:
             #Place platform locations for stage 1 here 
             ploc.append((worldx-(4*ty), worldy -256, 3))                    #The last number is how long the platform is  
             ploc.append((worldx//2 - 128, worldy - ty - 392, 10))
+            ploc.append((0, worldy-16, 30))
+            ploc.append((0, worldy//2, 8))
             while i < len(ploc):
                 j = 0
                 while j <= ploc[i][2]:
@@ -237,6 +251,7 @@ class Level:
         if level == 1:                                                               
             #Place platform locations for stage 1 here 
             spriloc.append((worldx-(6*ty), worldy -ty, 0))
+            spriloc.append((worldx // 2-ty-ty, worldy // 2, 0))
             while i < len(spriloc):
                 j = 0
                 while j <= spriloc[i][2]:
@@ -272,8 +287,8 @@ while i <= (worldx / tx) + tx:
     i = i + 1
     
 ground_list = Level.ground(1, gloc, tx, ty)
-plat_list = Level.platform(1, tx, ty)
 spike_list = Level.spike(1, tx, ty)
+plat_list = Level.platform(1, tx, ty)
 spring_list = Level.spring(1, tx, ty)
 
 
@@ -294,18 +309,21 @@ while running == True:
             pygame.quit()
             sys.exit()
 
-    player.gravity()
 
+    player.gravity()
     player.update()
+    player.animate()
+    
     batvert.update()
 
 
     player.draw(screen)
     batvert.draw(screen)
  #   ground_list.draw(screen)
-    plat_list.draw(screen)
     spike_list.draw(screen)
     spring_list.draw(screen)
+    plat_list.draw(screen)
+
 
     isHit = pygame.sprite.spritecollide(player, spike_list, False)
     
@@ -314,8 +332,10 @@ while running == True:
 
     isSpring = pygame.sprite.spritecollide(player, spring_list, False)
     for spring in isSpring:
-        player.accRem = 4
+        player.accRem = (player.jumpForce*1.5)
+
+    isspring,isHit = [],[]
 
 
     pygame.display.update()
-    screen.fill("red")
+    screen.fill("black")
