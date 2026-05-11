@@ -182,7 +182,22 @@ class Spike(pygame.sprite.Sprite):
         super().__init__()
         self.image = pygame.image.load("pyGame_Image_Folder/Animation/Platformer/Obstacles/Spike/Spike1.png").convert_alpha()
         self.bigrect = self.image.get_rect()
-        self.rect = self.bigrect.inflate(-48,-48)
+        self.rect = self.bigrect.inflate(-64,-48)
+        self.rect.y = yloc
+        self.rect.x = xloc
+        imgw = 128
+        imgh = 128
+        
+    def draw(self, screen):
+        screen.blit(self.image, self.rect)
+        pygame.draw.rect(screen, (255,0,0),self.rect,2) #display hitbox
+
+class Door(pygame.sprite.Sprite):
+    def __init__(self, xloc,yloc, imgw, imgh, img):
+        super().__init__()
+        self.image = pygame.image.load("pyGame_Image_Folder/Other/Exit Door/ExitDoor1.png").convert_alpha()
+        self.bigrect = self.image.get_rect()
+        self.rect = self.bigrect.inflate(-32,-32)
         self.rect.y = yloc
         self.rect.x = xloc
         imgw = 128
@@ -193,17 +208,8 @@ class Spike(pygame.sprite.Sprite):
         pygame.draw.rect(screen, (255,0,0),self.rect,2) #display hitbox
 
 class Level:                                             
-    def ground(level,gloc,tx,ty):
-        ground_list = pygame.sprite.Group()
-        i = 0
-        if level == 1:
-            tileGround = pygame.image.load("pyGame_Image_Folder/Terrain/Platformer/Floor/Ground1.png")
-            while i < len(gloc):
-                ground = Platform(gloc[i], worldy - ty, tx, ty, tileGround)
-                ground_list.add(ground)
-                i += 1
-                
     def spike(level, tx, ty):
+        print("started running") 
         spike_list = pygame.sprite.Group()
         sploc = []                                       #sploc is a list which determines the location of the spikes e.g. [0, 642,screenY,256]. it may be more efficient to add locs here.oly do when sure of a pos
         i = 0
@@ -211,16 +217,18 @@ class Level:
              #Place spike locations for stage 1 here 
              sploc.append((worldx // 2+ty, worldy // 2, 0))           #The last number is how many spikes in a row there are                        
              sploc.append((worldx // 2, worldy -ty, 0))
-             while i < len(sploc):                                    
-                j = 0
-                while j <= sploc[i][2]:                        #for some reason sploc is classed as a tuple
-                    spk = Spike((sploc[i][0] + (j * tx)), sploc[i][1], tx, ty, pygame.image.load("pyGame_Image_Folder/Animation/Platformer/Obstacles/Spike/Spike1.png"))
-                    spike_list.add(spk)
-                    j = j + 1
-                i = i + 1
-        if level == 2:
-            print("not yet complete")
-        return spike_list                  
+        else:
+             sploc.append((worldx // 2, worldy -ty-ty, 5))
+
+        while i < len(sploc):                                    
+            j = 0
+            while j <= sploc[i][2]:
+                spk = Spike((sploc[i][0] + (j * tx)), sploc[i][1], tx, ty, pygame.image.load("pyGame_Image_Folder/Animation/Platformer/Obstacles/Spike/Spike1.png"))
+                spike_list.add(spk)
+                j = j + 1
+            i = i + 1
+        print("finished running")
+        return spike_list
                 
     #add enemy spawn loc here
 
@@ -233,7 +241,7 @@ class Level:
             ploc.append((worldx-(4*ty), worldy -256, 3))                    #The last number is how long the platform is  
             ploc.append((worldx//2 - 128, worldy - ty - 392, 10))
             ploc.append((0, worldy-16, 30))
-            ploc.append((0, worldy//2, 8))
+            ploc.append((0, worldy//2-ty-ty, 8))
             while i < len(ploc):
                 j = 0
                 while j <= ploc[i][2]:
@@ -244,6 +252,25 @@ class Level:
         if level == 2:
             print("not yet complete")
         return plat_list
+
+    def door(level, tx, ty):
+        door_list = pygame.sprite.Group()
+        dloc = []                                       #ploc is a list which determines the location of the platforms e.g. [0, 642,screenY,256]
+        i = 0
+        if level == 1:                                                               
+            #Place platform locations for stage 1 here 
+            dloc.append((0+(4*ty), 0 +(4*ty+32), 0))                    #The last number is how long the platform is  
+            while i < len(dloc):
+                j = 0
+                while j <= dloc[i][2]:
+                    door = Door((dloc[i][0] + (j * tx)), dloc[i][1], tx, ty, pygame.image.load("pyGame_Image_Folder/Other/Exit Door/ExitDoor1.png").convert_alpha())
+                    door_list.add(door)
+                    j = j + 1
+                i = i + 1
+        if level == 2:
+            print("not yet complete")
+        return door_list
+    
     def spring(level, tx, ty):
         spring_list = pygame.sprite.Group()
         spriloc = []                                    
@@ -263,6 +290,10 @@ class Level:
             print("not yet complete")
         return spring_list
     
+    def newLevel(level,tx,ty):
+        level += 1
+        spike_list = Level.spike(level, tx, ty)        #not running the level.spike command
+    
 class Spring(pygame.sprite.Sprite):
     def __init__(self, xloc,yloc, imgw, imgh, img):
         super().__init__()
@@ -279,25 +310,14 @@ class Spring(pygame.sprite.Sprite):
             
 
     
-gloc = [0,worldy,128,worldy,256,worldy,384,worldy,512,worldy,640,worldy]
-i = 0
-
-while i <= (worldx / tx) + tx:
-    gloc.append(i * tx)
-    i = i + 1
-    
-ground_list = Level.ground(1, gloc, tx, ty)
-spike_list = Level.spike(1, tx, ty)
-plat_list = Level.platform(1, tx, ty)
-spring_list = Level.spring(1, tx, ty)
-
+spike_list = Level.spike(level, tx, ty)
+door_list = Level.door(level, tx, ty)
+plat_list = Level.platform(level, tx, ty)
+spring_list = Level.spring(level, tx, ty)
 
 player = Player() #spawn the player char
 batvert = BatVert()   #spawn the enemy bat
 player.rect.y = worldy - ty - ty        #Places player on ground
-
-
-
 
 
 #Loop for the majority of the actual game
@@ -319,8 +339,9 @@ while running == True:
 
     player.draw(screen)
     batvert.draw(screen)
- #   ground_list.draw(screen)
+
     spike_list.draw(screen)
+    door_list.draw(screen)
     spring_list.draw(screen)
     plat_list.draw(screen)
 
@@ -332,9 +353,16 @@ while running == True:
 
     isSpring = pygame.sprite.spritecollide(player, spring_list, False)
     for spring in isSpring:
-        player.accRem = (player.jumpForce*1.5)
+        player.accRem = (player.jumpForce*1.25)
 
-    isspring,isHit = [],[]
+    isDoor = pygame.sprite.spritecollide(player, door_list, True)
+    
+    for door in isDoor:
+        Level.newLevel(level,tx,ty)
+
+
+
+    isSpring,isHit,isDoor = [],[],[]
 
 
     pygame.display.update()
