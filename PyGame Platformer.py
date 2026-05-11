@@ -292,7 +292,7 @@ class Level:
     
     def newLevel(level,tx,ty):
         level += 1
-        spike_list = Level.spike(level, tx, ty)        #not running the level.spike command
+        spike_list = Level.spike(level, tx, ty)        #works when list is cleared but does not have any effect
     
 class Spring(pygame.sprite.Sprite):
     def __init__(self, xloc,yloc, imgw, imgh, img):
@@ -317,7 +317,7 @@ spring_list = Level.spring(level, tx, ty)
 
 player = Player() #spawn the player char
 batvert = BatVert()   #spawn the enemy bat
-player.rect.y = worldy - ty - ty        #Places player on ground
+player.rect.y = worldy // 2
 
 
 #Loop for the majority of the actual game
