@@ -77,8 +77,7 @@ class Player(pygame.sprite.Sprite):
         
         if pressed_keys[K_SPACE]:
             if self.isJumping == False:       #If not in the air(on the ground) and space pressed:
-                self.accRem += self.jumpForce               #Accelleration increases by jump force
-                print(self.accRem)                      
+                self.accRem += self.jumpForce               #Accelleration increases by jump force                  
 
                   
         if self.rect.left > 0:
@@ -116,6 +115,7 @@ class Player(pygame.sprite.Sprite):
     def death(self):
         self.accRem += 1                                                    #I must go now
         self.gravStrength = -0.5                                            #My people need me
+        running = False
     
     def draw(self, surface):
         if self.isFlipped == True:
@@ -209,7 +209,7 @@ class Door(pygame.sprite.Sprite):
 
 class Level:                                             
     def spike(level, tx, ty):
-        print("started running") 
+
         spike_list = pygame.sprite.Group()
         sploc = []                                       #sploc is a list which determines the location of the spikes e.g. [0, 642,screenY,256]. it may be more efficient to add locs here.oly do when sure of a pos
         i = 0
@@ -217,17 +217,20 @@ class Level:
              #Place spike locations for stage 1 here 
              sploc.append((worldx // 2+ty, worldy // 2, 0))           #The last number is how many spikes in a row there are                        
              sploc.append((worldx // 2, worldy -ty, 0))
+             print("spikePlace 1") 
         else:
              sploc.append((worldx // 2, worldy -ty-ty, 5))
+             sploc.append((worldx // 2, worldy -ty-ty, 5))
+             print("spikePlace 2") 
 
         while i < len(sploc):                                    
             j = 0
             while j <= sploc[i][2]:
                 spk = Spike((sploc[i][0] + (j * tx)), sploc[i][1], tx, ty, pygame.image.load("pyGame_Image_Folder/Animation/Platformer/Obstacles/Spike/Spike1.png"))
+                print(spike_list)
                 spike_list.add(spk)
                 j = j + 1
             i = i + 1
-        print("finished running")
         return spike_list
                 
     #add enemy spawn loc here
